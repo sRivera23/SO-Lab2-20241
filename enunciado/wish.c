@@ -10,7 +10,7 @@
 
 // ------------------------------------------- UTILS ------------------------------------------- //
 
-// Initialize a dynamic array with an initial capacity of 2
+// Inicializa un arreglo dinamico con una capacidad inicial de 2
 #define INIT_ARR(arrStruct, arrField, arrType) \
     do { \
         arrStruct.size = 0; \
@@ -18,16 +18,16 @@
         arrStruct.arrField = calloc(arrStruct.capacity, sizeof(arrType)); \
     } while(0)
 
-// Reallocate more space for a dynamic array by doubling its capacity
+// Asigna mas espacio para un arreglo dinamico duplicando su capacidad
 #define REALLOC(arrStruct, arrField, arrType) \
     if (arrStruct.size == arrStruct.capacity) { \
         arrStruct.capacity *= 2; \
         arrStruct.arrField = realloc(arrStruct.arrField, arrStruct.capacity * sizeof(arrType)); \
     }
 
-// ------------------------------------------- UTILS ------------------------------------------- //
+// ------------------------------------------- Utilidades ------------------------------------------- //
 
-// -------------------------- COLORS -------------------------- //
+// -------------------------- Colores y estilos de texto en la terminal -------------------------- //
 #define RED "\x1B[31m"
 #define GREEN "\x1B[32m"
 #define YELLOW "\x1B[33m"
@@ -41,58 +41,58 @@
 #define UNDERLINE "\x1B[4m"
 // -------------------------- COLORS -------------------------- //
 
-// -------------------------- GLOBAL VARIABLES -------------------------- //
+// -------------------------- Variables globales -------------------------- //
 
-// Structure for dynamic array to store command path entries
+// Estructura para un arreglo dinamico para almacenar entradas de rutas de comandos
 struct {
     char **entries;
     int size;
     int capacity;
 } path;
 
-// Structure for a command's arguments
+// Estructura para los argumentos de un comando
 struct Command {
     char **args;
     int size;
     int capacity;
 };
 
-// Dynamic array structure to hold single commands executing in parallel
+// Estructura de arreglo dinamico para almacenar comandos individuales que se ejecutan en paralelo
 struct {
     struct Command **singleCommands;
     int size;
     int capacity;
 } commands;
 
-// Line to read from input file
+// Linea para leer desde el archivo de entrada
 char *inputLine;
 
-// File path to be executed
+// Ruta del archivo a ejecutar
 char *filePath;
 
-// Program's exit code, can be 0 (success) or 1 (error)
+// Codigo de salida del programa, puede ser 0 (exito) o 1 (error)
 int exitCode;
 
-// Indicates batch processing mode (1) or interactive mode (0)
+// Indica el modo de procesamiento por lotes (1) o el modo interactivo (0)
 int batchProcessing;
 
-// -------------------------- GLOBAL VARIABLES -------------------------- //
+// -------------------------- VARIABLES GLOBALES -------------------------- //
 
 /**
- * @brief Checks if a relative or absolute file or command can be executed
+ * @brief Comprueba si se puede ejecutar un archivo o comando relativo o absoluto
  * 
- * @param filename The relative or absolute file or command to evaluate
- * @param filePath Returns the complete absolute path of the command to pass to execv
- * @return 1 if executable, 0 if not
+ * @param filename El archivo o comando relativo o absoluto a evaluar
+ * @param filePath Devuelve la ruta absoluta completa del comando que se pasara a execv
+ * @return 1 si es ejcutable, 0 si not
  */
 int checkAccess(char *filename, char **filePath) {
-    // Check if the absolute or relative path can be executed
+    // Verificar si se puede ejecutar la ruta absoluta o relativa
     if (access(filename, X_OK) == 0) {
         strcpy(*filePath, filename);
         return 1;
     }
 
-    // Check if command exists in any of the paths
+    // Comprueba si el comando existe en alguna de las rutas
     for (int i = 0; i < path.size; i++) {
         snprintf(*filePath, LINE_MAX, "%s/%s", path.entries[i], filename);
         if (access(*filePath, X_OK) == 0) {
@@ -104,20 +104,20 @@ int checkAccess(char *filename, char **filePath) {
 
 
 /**
- * @brief processes and executes an external command if valid
+ * @brief procesa y ejecuta un comando externo si es valido
  *
- * @param command Command to execute
- * @return 1 if shell can continue, 0 if shell needs to exit
+ * @param command comando a ejecutar
+ * @return 1 si el shell puede continuar, 0 si el shell necesita salir
  */
 int processExternalCommand(struct Command *command) {
     int redirectIndex = -1;
 
-    // Busca el símbolo de redirección en los argumentos
+    // Busca el simbolo de redireccion en los argumentos
     for (int i = 0; i < command->size; i++) {
         if (strcmp(command->args[i], ">") == 0) {
             redirectIndex = i;
 
-            // Error si el símbolo de redirección está al inicio o hay múltiples argumentos después de él
+            // Error si el simbolo de redireccion esta al inicio o hay multiples argumentos despues de el
             if (redirectIndex == 0 || command->size - (redirectIndex + 1) != 1) {
                 fprintf(stderr, "An error has occurred\n");
                 return 1;
@@ -157,7 +157,7 @@ int processExternalCommand(struct Command *command) {
             exit(1);
         }
     } else {
-        // Mensajes de error específicos para modo batch o interactivo
+        // Mensajes de error especificos para modo batch o interactivo
         fprintf(stderr, batchProcessing ? "An error has occurred\n" : "%serror:\n\tcommand '%s' not found\n", RED, command->args[0]);
     }
 
@@ -165,10 +165,10 @@ int processExternalCommand(struct Command *command) {
 }
 
 /**
- * @brief processes and executes a command if valid
+ * @brief Procesa y ejecuta un comando si es válida
  *
- * @param command Command to execute
- * @return 1 if shell can continue, 0 if shell needs to exit
+ * @param command Comando a ejecutar
+ * @return 1 si el shell puede continuar, 0 si el shell necesita salir
  */
 int processCommand(struct Command *command) {
     // Comando `exit`
